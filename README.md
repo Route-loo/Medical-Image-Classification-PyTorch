@@ -7,6 +7,13 @@ A PyTorch chest X-ray binary classifier (Normal / Pneumonia) based on ResNet-18 
 > For algorithm learning and demonstration only; output is not a medical diagnosis.
 > 本项目仅用于算法学习与演示，输出不构成医疗诊断，不能替代专业医师判断。
 
+## Demo Preview / 演示界面
+
+![Demo Preview](./project_view.png)
+
+Local Gradio web page: upload a chest X-ray to get the prediction and confidence.
+本地 Gradio 网页：上传胸部X光片即可获得预测结果与置信度。
+
 ## Tech Stack / 技术栈
 
 - **Framework / 框架**: PyTorch + TorchVision
