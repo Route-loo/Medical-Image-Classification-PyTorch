@@ -102,7 +102,10 @@ python infer.py
 
 #### 5. Grad-CAM 可解释性
 ![Grad-CAM对比拼图](./gradcam_montage.png)
-
+```bash
+python grad_cam_batch.py        # batch: save all heatmaps to heatmap/
+python make_heatmap_montage.py  # build gradcam_montage.png for README
+```
 Grad-CAM 热力图标注模型判断时关注的肺部区域：绿色为预测正确、红色为预测错误，
 可直观验证模型依据病灶区域而非背景做出判断。
 

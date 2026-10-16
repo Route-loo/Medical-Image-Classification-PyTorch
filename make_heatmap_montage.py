@@ -1,8 +1,9 @@
 """
-从 heatmap/ 文件夹挑选正确、错误样例，拼成一张对比图 gradcam_montage.png 用于 README。
-用法：先跑完 grad_cam_batch.py 生成 heatmap/，再运行：
+Pick correct / wrong samples from heatmap/ and build a comparison sheet gradcam_montage.png.
+Usage: run grad_cam_batch.py first, then:
     python make_heatmap_montage.py
-输出：项目根目录 gradcam_montage.png
+Output: gradcam_montage.png in project root.
+All titles are in English to avoid CJK font issues.
 """
 import os
 import re
@@ -10,19 +11,16 @@ import matplotlib
 import matplotlib.pyplot as plt
 from PIL import Image
 
-# ===== 中文字体配置（解决中文标题显示为方框）=====
-matplotlib.rcParams["font.sans-serif"] = ["Microsoft YaHei", "SimHei", "Arial Unicode MS"]
 matplotlib.rcParams["axes.unicode_minus"] = False
-# =================================================
 
-# ==================== 配置 ====================
+# ==================== Config ====================
 HEAT_DIR = "./heatmap"
 OUT_IMG = "./gradcam_montage.png"
-PER_CORRECT = 2      # 每个类别挑几张预测正确的
-PER_WRONG = 1        # 每个类别挑几张预测错误的（没有就自动跳过）
+PER_CORRECT = 2      # correct samples per true class
+PER_WRONG = 1        # wrong samples per true class (skipped if none)
 # ==============================================
 
-# 文件名格式：{stem}_pred{正常/肺炎}_conf{0.xxx}.jpg
+# filename: {stem}_pred{正常|肺炎}_conf{0.xxx}.jpg
 PATTERN = re.compile(r"_pred(正常|肺炎)_conf([0-9.]+)\.jpg$")
 
 
@@ -44,7 +42,7 @@ def parse_filename(fname, true_folder):
 def collect():
     samples = {"correct": [], "wrong": []}
     if not os.path.isdir(HEAT_DIR):
-        print(f"未找到 {HEAT_DIR}，请先运行 grad_cam_batch.py")
+        print(f"Folder {HEAT_DIR} not found; run grad_cam_batch.py first")
         return samples
 
     for folder in os.listdir(HEAT_DIR):
@@ -67,15 +65,13 @@ def collect():
 def main():
     samples = collect()
     picks = []
-    # 每个真实类别各取正确样例
     for true_folder in ("NORMAL", "PNEUMONIA"):
         pool = [s for s in samples["correct"] if s["true_folder"] == true_folder]
         picks += pool[:PER_CORRECT]
-    # 错误样例（两类合计取 PER_WRONG*2，有几张取几张）
     picks += samples["wrong"][: PER_WRONG * 2]
 
     if not picks:
-        print("没有可展示的样例图")
+        print("No samples to display")
         return
 
     n = len(picks)
@@ -87,17 +83,17 @@ def main():
         img = Image.open(s["path"]).convert("RGB")
         plt.subplot(rows, cols, i + 1)
         plt.imshow(img)
-        true_cn = "正常" if s["true_label"] == 0 else "肺炎"
-        pred_cn = "正常" if s["pred"] == 0 else "肺炎"
+        true_en = "Normal" if s["true_label"] == 0 else "Pneumonia"
+        pred_en = "Normal" if s["pred"] == 0 else "Pneumonia"
         color = "green" if s["correct"] else "red"
-        status = "✓正确" if s["correct"] else "✗错误"
-        plt.title(f"真实:{true_cn} 预测:{pred_cn}\n{status} conf={s['conf']:.2f}",
+        status = "OK" if s["correct"] else "Wrong"
+        plt.title(f"True:{true_en} Pred:{pred_en}\n{status} conf={s['conf']:.2f}",
                   color=color, fontsize=10)
         plt.axis("off")
 
     plt.tight_layout()
     plt.savefig(OUT_IMG, dpi=200, bbox_inches="tight")
-    print(f"✅ 拼图已保存: {os.path.abspath(OUT_IMG)}（共 {n} 张样例）")
+    print(f"Saved: {os.path.abspath(OUT_IMG)} ({n} samples)")
 
 
 if __name__ == "__main__":
