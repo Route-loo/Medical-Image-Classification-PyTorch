@@ -1,28 +1,32 @@
-# 医学影像二分类：胸部X光肺炎检测
+# Chest X-ray Pneumonia Detection / 胸部X光肺炎检测（二分类）
 
-基于 PyTorch 实现的胸部 X 光影像智能分类系统，采用 ResNet-18 迁移学习完成正常 / 肺炎胸片二分类，覆盖数据增强、类别不平衡处理、模型训练、全量评估、可解释性可视化与本地网页演示全流程，可快速迁移至其他医学影像分类场景。
+A PyTorch chest X-ray binary classifier (Normal / Pneumonia) based on ResNet-18 transfer learning. It covers data augmentation, class-imbalance handling, training, full evaluation, Grad-CAM explainability, and a local Gradio demo.
 
-## 项目背景
+基于 ResNet-18 迁移学习的胸部X光二分类器（正常 / 肺炎），覆盖数据增强、类别不平衡处理、模型训练、全量评估、Grad-CAM 可解释性与本地 Gradio 演示。
 
-针对医学影像小样本与类别不平衡场景，使用 ImageNet 预训练卷积神经网络进行迁移学习，聚焦儿童胸部 X 光片的肺炎病灶检测。项目不用于临床诊断，仅作为计算机视觉算法学习与工程化演示。
+> For algorithm learning and demonstration only; output is not a medical diagnosis.
+> 本项目仅用于算法学习与演示，输出不构成医疗诊断，不能替代专业医师判断。
 
-## 技术栈
+## Tech Stack / 技术栈
 
-- **深度学习框架**：PyTorch + TorchVision
-- **骨干模型**：ResNet-18 迁移学习（另提供 MobileNetV2 轻量化版本 `model_mobile.py`）
-- **数据处理**：灰度图标准化、随机翻转、随机旋转、中心裁剪
-- **不平衡处理**：类别加权交叉熵损失 / WeightedRandomSampler 过采样
-- **评估指标**：准确率、精确率、召回率、F1、混淆矩阵、ROC/AUC
-- **可解释性**：Grad-CAM 热力图
-- **交互演示**：Gradio 本地网页
+- **Framework / 框架**: PyTorch + TorchVision
+- **Backbone / 骨干网络**: ResNet-18 transfer learning; optional MobileNetV2 lightweight version (`model_mobile.py`) / ResNet-18 迁移学习，另提供 MobileNetV2 轻量化版本
+- **Augmentation / 数据增强**: grayscale normalization, random horizontal flip, random rotation, center crop / 灰度标准化、随机翻转、随机旋转、中心裁剪
+- **Imbalance handling / 不平衡处理**: class-weighted cross-entropy, optional WeightedRandomSampler / 类别加权交叉熵，可选过采样
+- **Metrics / 评估指标**: Accuracy, Precision, Recall, F1, Confusion Matrix, ROC/AUC / 准确率、精确率、召回率、F1、混淆矩阵、ROC/AUC
+- **Explainability / 可解释性**: Grad-CAM heatmaps / Grad-CAM 热力图
+- **Demo / 演示**: local Gradio web page / 本地 Gradio 网页
 
-## 数据集
+## Dataset / 数据集
 
-采用 Kaggle 公开儿童胸部 X 光肺炎数据集（Chest X-Ray Images / Pneumonia），共 5863 张标注胸片，已划分 train / val / test。
+Kaggle public pediatric chest X-ray pneumonia dataset (Chest X-Ray Images / Pneumonia), 5863 labeled images split into train / val / test.
 
-- 类别：二分类（Normal 正常 / Pneumonia 肺炎）
-- 标注来源：广州妇女儿童医疗中心，放射科医生校验
-- 目录结构：
+采用 Kaggle 公开儿童胸部X光肺炎数据集，共 5863 张标注胸片，已划分 train / val / test。
+
+- Classes / 类别: binary (Normal / Pneumonia) / 二分类（正常 / 肺炎）
+- The dataset is large and **not included in this repository**; download from Kaggle and place as:
+
+数据集较大，**不纳入仓库**，请从 Kaggle 下载后按以下结构放置：
 
 ```
 chest_xray/
@@ -37,115 +41,112 @@ chest_xray/
     └── PNEUMONIA/
 ```
 
-> 数据集体积较大，不纳入仓库，请从 Kaggle 自行下载后按上述结构放置。
+## Training Summary / 训练概况
 
-## 实验结果（基线模型）
+- Epochs / 轮数: 10; Device / 设备: CPU
+- Class counts / 各类样本数: NORMAL 1341, PNEUMONIA 3875
+- Class weights / 类别权重: Normal 1.945, Pneumonia 0.673（inverse-frequency weighting / 反比频率加权）
+- Best validation accuracy / 最佳验证准确率: 100.00%（验证集仅 16 张，仅供参考；真实表现以测试集为准 / val set has only 16 images, treat as reference only; rely on test set）
 
-| 指标 | 数值 |
-|---|---|
-| 测试集准确率 | 84.46% |
-| 肺炎精确率 | 80.21% |
-| 肺炎召回率 | 99.74% |
-| F1 分数 | 0.889 |
-| AUC | 0.9723 |
+## Results / 实验结果
 
-> 基线模型对肺炎漏检率极低，但因类别不平衡，正常胸片存在一定假阳性；启用类别加权损失后两类判定更均衡。
+Test set results (624 images) from `python test_evaluation.py`.
+测试集结果（624 张），由 `python test_evaluation.py` 得出。
 
-### 可视化结果
+| Metric / 指标 | Weighted Model / 加权模型 | Baseline / 基线 |
+|---|---|---|
+| Test Accuracy / 测试准确率 | 85.58% | 84.46% |
+| Pneumonia Precision / 肺炎精确率 | 0.8138 | 0.8021 |
+| Pneumonia Recall / 肺炎召回率 | 0.9974 | 0.9974 |
+| F1 Score / F1 分数 | 0.8963 | 0.889 |
+| AUC | 0.9705 | 0.9723 |
 
-#### 1. 混淆矩阵
-![混淆矩阵](./confusion_matrix.png)
+> Class-weighted loss slightly improves Accuracy / Precision / F1 while keeping near-perfect recall; AUC remains ~0.97.
+> 类别加权后准确率、精确率、F1 小幅提升，召回率接近满分，AUC 维持在 0.97 左右。
 
-肺炎样本几乎全部正确识别，正常样本存在部分假阳性，主要由训练集类别不平衡导致。
+## Visualization / 可视化
 
-#### 2. ROC 曲线
-![ROC曲线](./roc_curve.png)
+### 1. Confusion Matrix / 混淆矩阵
+![Confusion Matrix](./confusion_matrix.png)
 
-AUC = 0.9723，模型在不同置信度阈值下均具备优秀的二分类判别能力。
+### 2. ROC Curve / ROC 曲线
+![ROC Curve](./roc_curve.png)
 
-#### 3. 测试样例预测
-![测试样例预测](./sample_predictions.png)
+### 3. Sample Predictions / 测试样例预测
+![Sample Predictions](./sample_predictions.png)
 
-随机抽取 9 张测试图像，绿色为预测正确、红色为预测错误，标注真实标签与模型置信度。
+### 4. Grad-CAM Comparison / Grad-CAM 对比
+![Grad-CAM](./gradcam_montage.png)
 
-#### 4. Grad-CAM 可解释性
-![Grad-CAM](./heatmap.jpg)
+Green = correct, red = wrong; heatmap highlights the lung regions the model relies on.
+绿色=预测正确，红色=预测错误；热力图标注模型判断所依赖的肺部区域。
 
-热力图标注模型判断时关注的肺部区域，验证模型依据病灶区域而非背景做出判断。
+## Quick Start / 快速开始
 
-## 快速开始
-
-### 1. 安装依赖
+### 1. Install dependencies / 安装依赖
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. 训练模型（含类别加权）
+### 2. Train / 训练（含类别加权）
 ```bash
 python train.py
 ```
-- `USE_CLASS_WEIGHT=True`：启用类别加权交叉熵损失，缓解类别不平衡
-- `USE_SAMPLER=True`：启用过采样（与加权二选一，避免双重放大）
-- 自动保存验证集准确率最高的权重至 `checkpoints/best_model.pth`
+- `USE_CLASS_WEIGHT=True`: class-weighted cross-entropy / 类别加权交叉熵
+- `USE_SAMPLER=True`: oversampling (use either, not both) / 过采样（与加权二选一）
+- Best checkpoint → `checkpoints/best_model.pth` / 最佳权重保存至该路径
 
-### 3. 全量测试与评估
+### 3. Full test & evaluation / 全量测试评估
 ```bash
 python test_evaluation.py
 ```
-输出准确率、精确率、召回率、F1，并生成混淆矩阵、ROC 曲线、样例预测图。
+Outputs Accuracy / Precision / Recall / F1 and generates charts.
+输出准确率、精确率、召回率、F1 并生成图表。
 
-### 4. 单张图像推理
+### 4. Single-image inference / 单张推理
 ```bash
 python infer.py
 ```
-修改脚本内图片路径即可对单张胸片预测。
 
-#### 5. Grad-CAM 可解释性
-![Grad-CAM对比拼图](./gradcam_montage.png)
+### 5. Grad-CAM
 ```bash
-python grad_cam_batch.py        # batch: save all heatmaps to heatmap/
-python make_heatmap_montage.py  # build gradcam_montage.png for README
-```
-Grad-CAM 热力图标注模型判断时关注的肺部区域：绿色为预测正确、红色为预测错误，
-可直观验证模型依据病灶区域而非背景做出判断。
-
-
-### 6. Grad-CAM 热力图
-```bash
-python grad_cam.py
+python grad_cam_batch.py        # batch heatmaps → heatmap/ / 批量生成热力图
+python make_heatmap_montage.py  # build gradcam_montage.png / 生成对比拼图
 ```
 
-### 7. 本地网页演示
+### 6. Local web demo / 本地网页演示
 ```bash
 python demo.py
 ```
-浏览器打开 `http://127.0.0.1:7860`，上传胸片即可查看预测结果（仅本机访问，不创建公网隧道）。
+Open `http://127.0.0.1:7860` / 浏览器打开该地址（local only / 仅本机）。
 
-## 项目结构
+## Project Structure / 项目结构
 
 ```
 Medical-Image-Classification-PyTorch
-├── dataset.py            # 数据加载与增强
-├── model.py              # ResNet18 迁移学习模型
-├── model_mobile.py      # MobileNetV2 轻量化模型（可选）
-├── train.py              # 训练主脚本（类别加权 / 过采样）
-├── test_evaluation.py    # 全量测试与指标评估
-├── infer.py              # 单张图像推理
-├── grad_cam.py           # Grad-CAM 可解释性可视化
-├── demo.py               # Gradio 本地网页演示
-├── requirements.txt      # 依赖包
+├── dataset.py              # data loading & augmentation / 数据加载与增强
+├── model.py                # ResNet18 model / ResNet18 模型
+├── model_mobile.py         # MobileNetV2 lightweight / 轻量化模型（可选）
+├── train.py                # training (weighting / oversampling) / 训练
+├── test_evaluation.py      # full test & metrics / 全量评估
+├── infer.py                # single-image inference / 单张推理
+├── grad_cam.py             # single-image Grad-CAM / 单张热力图
+├── grad_cam_batch.py       # batch Grad-CAM / 批量热力图
+├── make_heatmap_montage.py # comparison sheet / 对比拼图
+├── demo.py                 # Gradio demo / 网页演示
+├── requirements.txt
 └── README.md
 ```
 
-## 已做优化与后续方向
+## Done vs Future / 已实现与展望
 
-| 方向 | 本项目已实现 | 后续可扩展 |
+| Direction / 方向 | Implemented / 已实现 | Future / 展望 |
 |---|---|---|
-| 类别不平衡 | 类别加权损失 + 可选过采样 | 重采样策略对比、Focal Loss |
-| 模型轻量化 | 提供 MobileNetV2 版本 | 量化 / 蒸馏、边缘端部署 |
-| 可解释性 | Grad-CAM 热力图 | Grad-CAM++、对比不同层 |
-| 任务扩展 | 二分类基线 | 14 类多标签（ChestX-ray14）、U-Net 病灶分割 |
+| Class imbalance / 类别不平衡 | weighted loss + optional oversampling / 加权损失+可选过采样 | resampling comparison, Focal Loss / 重采样对比、Focal Loss |
+| Lightweight model / 轻量化 | MobileNetV2 version / MobileNetV2 版本 | quantization, edge deployment / 量化、边缘部署 |
+| Explainability / 可解释性 | Grad-CAM | Grad-CAM++, layer comparison |
+| Task extension / 任务扩展 | binary baseline / 二分类基线 | multi-label, U-Net segmentation / 多标签、病灶分割 |
 
-## 免责声明
-
-本项目仅用于算法学习与技术演示，输出结果不构成任何医疗诊断依据，不能替代专业医师判断。
+## Disclaimer / 免责声明
+For algorithm learning and demonstration only; not a medical diagnosis.
+仅用于算法学习与技术演示，不构成医疗诊断，不能替代专业医师。
