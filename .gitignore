@@ -5,6 +5,7 @@ venv/
 # 数据集
 chest_xray/
 *.zip
+heatmap/
 
 # 模型权重和缓存
 checkpoints/
